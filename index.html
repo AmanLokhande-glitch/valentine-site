@@ -77,15 +77,17 @@
       border-radius: 12px;
       background: rgba(255,59,122,.14);
     }
+
+    /* IMPORTANT: no "position: relative" here, so the NO button isn't trapped */
     .row {
       display: flex;
       gap: 14px;
       flex-wrap: wrap;
       align-items: center;
       margin-top: 18px;
-      position: relative;
       min-height: 64px;
     }
+
     button {
       border: 0;
       cursor: pointer;
@@ -117,9 +119,9 @@
       opacity: .75;
     }
 
-    /* second screen */
     .screen { display: none; }
     .screen.active { display: block; }
+
     .plan {
       margin-top: 14px;
       padding: 16px;
@@ -128,6 +130,7 @@
     }
     .plan ul { margin: 10px 0 0 18px; padding: 0; }
     .plan li { margin: 6px 0; }
+
     .footer {
       margin-top: 18px;
       display: flex;
@@ -203,7 +206,6 @@
 
     const yesBtn = document.getElementById("yesBtn");
     const noBtn = document.getElementById("noBtn");
-    const btnRow = document.getElementById("btnRow");
 
     function showYesScreen() {
       ask.classList.remove("active");
@@ -213,40 +215,65 @@
 
     yesBtn.addEventListener("click", showYesScreen);
 
-    // Make NO button dodge the cursor / finger
-    function moveNoButton() {
-      const rowRect = btnRow.getBoundingClientRect();
-      const btnRect = noBtn.getBoundingClientRect();
+    // ---- NO BUTTON: TELEPORT ANYWHERE ON SCREEN, UNCATCHABLE ----
+    noBtn.style.position = "fixed";
+    noBtn.style.zIndex = 9999;
+    noBtn.setAttribute("tabindex", "-1");
 
-      // Keep it inside the row bounds
-      const maxX = rowRect.width - btnRect.width;
-      const maxY = rowRect.height - btnRect.height;
+    function teleportNoButton() {
+      const padding = 16;
+      const rect = noBtn.getBoundingClientRect();
 
-      const x = Math.max(0, Math.min(maxX, Math.random() * maxX));
-      const y = Math.max(0, Math.min(maxY, Math.random() * maxY));
+      const maxX = window.innerWidth - rect.width - padding;
+      const maxY = window.innerHeight - rect.height - padding;
 
-      noBtn.style.position = "absolute";
-      noBtn.style.left = x + "px";
-      noBtn.style.top = y + "px";
+      const x = padding + Math.random() * Math.max(0, maxX - padding);
+      const y = padding + Math.random() * Math.max(0, maxY - padding);
+
+      noBtn.style.left = `${x}px`;
+      noBtn.style.top = `${y}px`;
     }
 
-    // desktop hover
-    noBtn.addEventListener("mouseenter", moveNoButton);
-    // mobile touch
-    noBtn.addEventListener("touchstart", (e) => { e.preventDefault(); moveNoButton(); }, { passive: false });
+    window.addEventListener("load", teleportNoButton);
+    window.addEventListener("resize", teleportNoButton);
+
+    // Desktop: flee when cursor comes near
+    document.addEventListener("mousemove", (e) => {
+      const r = noBtn.getBoundingClientRect();
+      const cx = r.left + r.width / 2;
+      const cy = r.top + r.height / 2;
+      const dist = Math.hypot(e.clientX - cx, e.clientY - cy);
+
+      if (dist < 170) {
+        teleportNoButton();
+        // extra chaos (optional)
+        setTimeout(teleportNoButton, 25);
+      }
+    });
+
+    // Mobile: flee on touch
+    noBtn.addEventListener("touchstart", (e) => {
+      e.preventDefault();
+      teleportNoButton();
+      setTimeout(teleportNoButton, 25);
+    }, { passive: false });
+
+    // Safety net: if clicked somehow
+    noBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      teleportNoButton();
+    });
+
+    // ---- Hearts effect ----
+    document.getElementById("confettiBtn").addEventListener("click", () => burstHearts(24));
 
     // Replay
     document.getElementById("restartBtn").addEventListener("click", () => {
       yes.classList.remove("active");
       ask.classList.add("active");
-      // reset NO button
-      noBtn.style.position = "";
-      noBtn.style.left = "";
-      noBtn.style.top = "";
+      teleportNoButton();
     });
-
-    // Hearts effect
-    document.getElementById("confettiBtn").addEventListener("click", () => burstHearts(24));
 
     function burstHearts(count) {
       for (let i = 0; i < count; i++) {
