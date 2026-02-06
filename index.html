@@ -139,6 +139,22 @@
       font-size:16px;
       outline:none;
     }
+
+    /* Hint + Michael image row */
+    .hintRow{
+      display:flex;
+      gap:12px;
+      align-items:center;
+    }
+    .michaelPic{
+      width:72px;
+      height:72px;
+      border-radius:14px;
+      object-fit:cover;
+      box-shadow:0 10px 22px rgba(0,0,0,.16);
+      flex:0 0 auto;
+    }
+
     .hint{font-size:13px; opacity:.75}
     .error{font-size:13px; color:#7a1d3a; font-weight:800; display:none}
     .error.show{display:block}
@@ -203,7 +219,13 @@
           <input id="codeInput" type="password" placeholder="(Michael Scott fans only 😌)" autocomplete="off" />
           <button class="linkbtn" id="unlockBtn">Unlock</button>
         </div>
-        <div class="hint" id="hintText"></div>
+
+        <!-- Michael image + hint -->
+        <div class="hintRow">
+          <img class="michaelPic" src="./michael.jpg" alt="Michael Scott shouting" />
+          <div class="hint" id="hintText"></div>
+        </div>
+
         <div class="error" id="errorText">Nope 😅 try again</div>
       </div>
 
@@ -223,10 +245,7 @@
 
       <div class="plan">
         <b id="stepBoxTitle">Tap “Next” 👇</b>
-        <ul id="stepList">
-          <li>One tiny step for you…</li>
-          <li>One giant step for my heart 💘</li>
-        </ul>
+        <ul id="stepList"></ul>
       </div>
 
       <div class="song">
@@ -244,13 +263,12 @@
     // ===== CUSTOMIZE HERE =====
     const SETTINGS = {
       herName: "My Love",
-      loveCode: "i declare bankruptcy",
+      loveCode: "i declare bankruptcy", // PASSCODE (case/punctuation doesn't matter)
       hint: "Hint: Michael shouted it at the office 📣",
       personalLine: "I choose you. Always. 💞",
 
-      // Best song pick: upbeat, romantic, and Office-friendly energy
+      // Song pick
       songTitle: "You Make My Dreams (Come True) — Hall & Oates",
-      // Use whichever link you prefer:
       songUrl: "https://www.youtube.com/results?search_query=You+Make+My+Dreams+Hall+and+Oates"
     };
 
@@ -269,13 +287,14 @@
     const tinyText = document.getElementById("tinyText");
 
     const songLink = document.getElementById("songLink");
-    songLink.href = SETTINGS.songUrl;
-    songLink.textContent = "🎶 " + SETTINGS.songTitle;
 
     herNameEl.textContent = SETTINGS.herName;
     hintText.textContent = SETTINGS.hint;
 
-    // Prevent iOS rubber banding while playing
+    songLink.href = SETTINGS.songUrl;
+    songLink.textContent = "🎶 " + SETTINGS.songTitle;
+
+    // Prevent iOS rubber-banding while interacting
     document.documentElement.style.overscrollBehavior = "none";
     document.body.style.overscrollBehavior = "none";
 
@@ -293,8 +312,8 @@
 
     function normalize(s){
       return (s || "").trim().toLowerCase()
-        .replace(/[!?.,"'’“”]/g, "")  // ignore punctuation
-        .replace(/\s+/g, " ");        // collapse spaces
+        .replace(/[!?.,"'’“”]/g, "")
+        .replace(/\s+/g, " ");
     }
 
     function unlock(){
@@ -316,7 +335,7 @@
       if (e.key === "Enter") unlock();
     });
 
-    // ===== YES GROWS (ALWAYS) WHEN SHE TRIES "NO" =====
+    // ===== YES GROWS WHEN SHE TRIES "NO" (even before unlocking) =====
     function growYesLittle(){
       yesScale = Math.min(1.95, yesScale + 0.10);
       yesBtn.style.transform = `scale(${yesScale})`;
@@ -328,7 +347,6 @@
         "We both know the answer 💖",
         "Stop playinggg 😭💘"
       ];
-      // Show fun text even before unlock
       tinyText.textContent = lines[Math.min(lines.length - 1, Math.floor(noDodges / 2))];
     }
 
@@ -385,6 +403,7 @@
 
       nextBtn.textContent = s.nextText;
     }
+    renderStep();
 
     function showYesScreen(){
       if (!unlocked) {
@@ -419,7 +438,7 @@
       teleportNoButton();
     });
 
-    // ===== NO BUTTON: iOS-SAFE teleport (never goes off-screen) =====
+    // ===== NO BUTTON: iOS-SAFE teleport (never off-screen) =====
     noBtn.style.position = "fixed";
     noBtn.style.zIndex = "9999";
     noBtn.style.touchAction = "none";
@@ -448,7 +467,6 @@
     function teleportNoButton(){
       const pad = getSafePadding();
       const { w, h, ox, oy } = viewportBox();
-
       const rect = noBtn.getBoundingClientRect();
 
       const minX = ox + pad.left;
@@ -469,31 +487,30 @@
       const n = noBtn.getBoundingClientRect();
       const y = yesBtn.getBoundingClientRect();
       const overlap = !(n.right < y.left || n.left > y.right || n.bottom < y.top || n.top > y.bottom);
-      if (overlap) {
-        // try a few more times quickly
-        for (let i = 0; i < 4; i++) {
-          const pad = getSafePadding();
-          const { w, h, ox, oy } = viewportBox();
-          const rect = noBtn.getBoundingClientRect();
-          const minX = ox + pad.left;
-          const maxX = ox + w - rect.width - pad.right;
-          const minY = oy + pad.top;
-          const maxY = oy + h - rect.height - pad.bottom;
+      if (!overlap) return;
 
-          const x = (maxX <= minX) ? minX : (minX + Math.random() * (maxX - minX));
-          const yy = (maxY <= minY) ? minY : (minY + Math.random() * (maxY - minY));
+      for (let i = 0; i < 5; i++) {
+        const pad = getSafePadding();
+        const { w, h, ox, oy } = viewportBox();
+        const rect = noBtn.getBoundingClientRect();
 
-          noBtn.style.left = `${clamp(x, minX, maxX)}px`;
-          noBtn.style.top  = `${clamp(yy, minY, maxY)}px`;
+        const minX = ox + pad.left;
+        const maxX = ox + w - rect.width - pad.right;
+        const minY = oy + pad.top;
+        const maxY = oy + h - rect.height - pad.bottom;
 
-          const n2 = noBtn.getBoundingClientRect();
-          const overlap2 = !(n2.right < y.left || n2.left > y.right || n2.bottom < y.top || n2.top > y.bottom);
-          if (!overlap2) break;
-        }
+        const x = (maxX <= minX) ? minX : (minX + Math.random() * (maxX - minX));
+        const yy = (maxY <= minY) ? minY : (minY + Math.random() * (maxY - minY));
+
+        noBtn.style.left = `${clamp(x, minX, maxX)}px`;
+        noBtn.style.top  = `${clamp(yy, minY, maxY)}px`;
+
+        const n2 = noBtn.getBoundingClientRect();
+        const overlap2 = !(n2.right < y.left || n2.left > y.right || n2.bottom < y.top || n2.top > y.bottom);
+        if (!overlap2) break;
       }
     }
 
-    // Teleport on viewport changes (iOS address bar / rotation)
     function rafTeleport(){ requestAnimationFrame(teleportNoButton); }
 
     window.addEventListener("load", rafTeleport);
@@ -516,7 +533,7 @@
       const cy = r.top + r.height / 2;
       const dist = Math.hypot(clientX - cx, clientY - cy);
 
-      const dangerRadius = 180; // good for big iPhones
+      const dangerRadius = 180;
       if (dist < dangerRadius) {
         noDodges++;
         teleportNoButton();
@@ -534,7 +551,6 @@
       maybeRunAway(t.clientX, t.clientY);
     }, { passive: true });
 
-    // If she actually touches/clicks it: cancel + move
     function denyAndRun(e){
       e.preventDefault();
       e.stopPropagation();
