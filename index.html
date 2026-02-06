@@ -2,33 +2,47 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Valentine?</title>
+
   <style>
     :root {
       --bg1: #ffdde1;
       --bg2: #ee9ca7;
-      --card: rgba(255,255,255,.75);
+      --card: rgba(255,255,255,.78);
       --text: #3b1b2a;
       --yes: #ff3b7a;
       --yes2:#ff5c93;
       --no:#444;
     }
     * { box-sizing: border-box; }
-    body {
+    html, body {
+      height: 100%;
       margin: 0;
-      min-height: 100vh;
+    }
+    body {
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji","Segoe UI Emoji";
       color: var(--text);
       background: radial-gradient(circle at 20% 20%, var(--bg1), var(--bg2));
       display: grid;
       place-items: center;
       overflow: hidden;
+      padding:
+        calc(12px + env(safe-area-inset-top))
+        calc(12px + env(safe-area-inset-right))
+        calc(12px + env(safe-area-inset-bottom))
+        calc(12px + env(safe-area-inset-left));
+      overscroll-behavior: none;
+      -webkit-user-select: none;
+      user-select: none;
     }
+
+    /* subtle floating dots */
     .hearts {
-      position: absolute; inset: 0;
+      position: fixed;
+      inset: 0;
       pointer-events: none;
-      opacity: .35;
+      opacity: .32;
       background-image:
         radial-gradient(circle at 10% 20%, #fff 0 1px, transparent 2px),
         radial-gradient(circle at 70% 80%, #fff 0 1px, transparent 2px),
@@ -41,15 +55,18 @@
       from { transform: translateY(0); }
       to { transform: translateY(40px); }
     }
+
     .card {
-      width: min(720px, 92vw);
+      width: min(760px, 92vw);
       padding: clamp(18px, 4vw, 36px);
       border-radius: 24px;
       background: var(--card);
       backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       box-shadow: 0 20px 60px rgba(0,0,0,.18);
       position: relative;
     }
+
     .badge {
       display: inline-flex;
       gap: 8px;
@@ -60,17 +77,20 @@
       font-weight: 600;
       font-size: 14px;
     }
+
     h1 {
       margin: 14px 0 10px;
       font-size: clamp(28px, 4.8vw, 46px);
       line-height: 1.08;
       letter-spacing: -0.02em;
     }
+
     p {
       margin: 0 0 18px;
       font-size: clamp(16px, 2.4vw, 20px);
-      opacity: .9;
+      opacity: .92;
     }
+
     .name {
       display: inline-block;
       padding: 0 10px;
@@ -78,7 +98,7 @@
       background: rgba(255,59,122,.14);
     }
 
-    /* IMPORTANT: no "position: relative" here, so the NO button isn't trapped */
+    /* IMPORTANT: no position:relative, so NO button isn't trapped */
     .row {
       display: flex;
       gap: 14px;
@@ -98,12 +118,13 @@
       transition: transform .08s ease, filter .2s ease;
       user-select: none;
       -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
     }
     button:active { transform: scale(.98); }
 
     .yes {
       background: linear-gradient(135deg, var(--yes), var(--yes2));
-      color: white;
+      color: #fff;
       box-shadow: 0 14px 30px rgba(255,59,122,.35);
     }
     .yes:hover { filter: brightness(1.05); }
@@ -111,6 +132,7 @@
     .no {
       background: rgba(0,0,0,.08);
       color: var(--no);
+      touch-action: none; /* we will intercept touch/pointer */
     }
 
     .tiny {
@@ -141,8 +163,49 @@
       background: rgba(255,255,255,.7);
       font-weight: 700;
     }
+
+    /* Password box */
+    .gate {
+      margin-top: 14px;
+      padding: 14px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.65);
+      display: grid;
+      gap: 10px;
+    }
+    .gate label {
+      font-weight: 700;
+      font-size: 14px;
+      opacity: .9;
+    }
+    .gateRow {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    input[type="password"]{
+      flex: 1 1 220px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(0,0,0,.08);
+      font-size: 16px;
+      outline: none;
+    }
+    .hint {
+      font-size: 13px;
+      opacity: .75;
+    }
+    .error {
+      font-size: 13px;
+      color: #7a1d3a;
+      font-weight: 700;
+      display: none;
+    }
+    .error.show { display: block; }
   </style>
 </head>
+
 <body>
   <div class="hearts"></div>
 
@@ -157,124 +220,332 @@
         I just want <b>you</b>. Today, and all the little days after.
       </p>
 
+      <!-- Password Gate -->
+      <div class="gate" id="gateBox">
+        <label for="codeInput">Before you click anything… enter the love code 🔒</label>
+        <div class="gateRow">
+          <input id="codeInput" type="password" placeholder="(our inside joke 😌)" autocomplete="off" />
+          <button class="linkbtn" id="unlockBtn">Unlock</button>
+        </div>
+        <div class="hint" id="hintText">Hint: it’s something only we know.</div>
+        <div class="error" id="errorText">Nope 😅 try again</div>
+      </div>
+
       <div class="row" id="btnRow">
-        <button class="yes" id="yesBtn">YES 💖</button>
+        <button class="yes" id="yesBtn" disabled style="opacity:.6; filter:saturate(.7);">YES 💖</button>
         <button class="no" id="noBtn">No 🙃</button>
       </div>
 
-      <div class="tiny">Tip: open this on your phone for maximum cuteness.</div>
+      <div class="tiny" id="tinyText">Unlock it first 😌</div>
     </section>
 
-    <!-- SCREEN 2 -->
+    <!-- SCREEN 2: multi-step YES flow -->
     <section id="screen-yes" class="screen">
-      <div class="badge">🥰 It’s a date!</div>
-      <h1>Yay!! I’m the luckiest 💕</h1>
-      <p id="personalLine">I can’t wait to celebrate with you.</p>
+      <div class="badge" id="stepBadge">🥰 Step 1</div>
+      <h1 id="stepTitle">Wait… are you sure? 😳</h1>
+      <p id="stepText">Because I’m about to get very happy.</p>
 
-      <div class="plan">
-        <b>Proposed Valentine Plan:</b>
-        <ul>
-          <li>🍓 Your favorite treat</li>
-          <li>🍽️ Dinner (my treat)</li>
-          <li>🎬 Cozy movie / something fun</li>
-          <li>📸 One cute photo together</li>
+      <div class="plan" id="stepBox">
+        <b id="stepBoxTitle">Tap “Next” 👇</b>
+        <ul id="stepList">
+          <li>One tiny step for you…</li>
+          <li>One giant step for my heart 💘</li>
         </ul>
       </div>
 
       <div class="footer">
         <button class="linkbtn" id="restartBtn">Replay</button>
-        <button class="yes" id="confettiBtn">More hearts 💗</button>
+        <button class="yes" id="nextBtn">Next ➜</button>
       </div>
     </section>
   </main>
 
   <script>
-    // --- Customize here ---
+    // ===== CUSTOMIZE HERE =====
     const SETTINGS = {
-      herName: "My Love", // e.g., "Sofia"
+      herName: "My Love",
+      loveCode: "pizza",              // <--- change this to your inside joke / code
+      hint: "Hint: our favorite thing 🍕",
       personalLine: "I choose you. Always. 💞"
     };
 
-    // --- Wire up UI ---
+    // ===== BASIC WIRES =====
     const herNameEl = document.getElementById("herName");
-    const personalLineEl = document.getElementById("personalLine");
     const ask = document.getElementById("screen-ask");
-    const yes = document.getElementById("screen-yes");
-
-    herNameEl.textContent = SETTINGS.herName;
-    personalLineEl.textContent = SETTINGS.personalLine;
+    const yesScreen = document.getElementById("screen-yes");
 
     const yesBtn = document.getElementById("yesBtn");
     const noBtn = document.getElementById("noBtn");
 
+    const codeInput = document.getElementById("codeInput");
+    const unlockBtn = document.getElementById("unlockBtn");
+    const hintText = document.getElementById("hintText");
+    const errorText = document.getElementById("errorText");
+    const tinyText = document.getElementById("tinyText");
+
+    herNameEl.textContent = SETTINGS.herName;
+    hintText.textContent = SETTINGS.hint;
+
+    // Prevent iOS "rubber band" while interacting
+    document.documentElement.style.overscrollBehavior = "none";
+    document.body.style.overscrollBehavior = "none";
+
+    let unlocked = false;
+    let yesScale = 1;
+    let noDodges = 0;
+
+    function setYesEnabled(enabled) {
+      yesBtn.disabled = !enabled;
+      yesBtn.style.opacity = enabled ? "1" : ".6";
+      yesBtn.style.filter = enabled ? "none" : "saturate(.7)";
+      tinyText.textContent = enabled ? "Okay… now choose wisely 😌" : "Unlock it first 😌";
+    }
+
+    setYesEnabled(false);
+
+    function normalize(s) {
+      return (s || "").trim().toLowerCase();
+    }
+
+    function unlock() {
+      const entered = normalize(codeInput.value);
+      if (entered && entered === normalize(SETTINGS.loveCode)) {
+        unlocked = true;
+        errorText.classList.remove("show");
+        setYesEnabled(true);
+        burstHearts(14);
+        codeInput.blur();
+      } else {
+        errorText.classList.add("show");
+        burstHearts(6);
+      }
+    }
+
+    unlockBtn.addEventListener("click", unlock);
+    codeInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") unlock();
+    });
+
+    // ===== YES FLOW (multi-step) =====
+    const stepBadge = document.getElementById("stepBadge");
+    const stepTitle = document.getElementById("stepTitle");
+    const stepText  = document.getElementById("stepText");
+    const stepBoxTitle = document.getElementById("stepBoxTitle");
+    const stepList = document.getElementById("stepList");
+    const nextBtn = document.getElementById("nextBtn");
+    const restartBtn = document.getElementById("restartBtn");
+
+    const steps = [
+      {
+        badge: "🥰 Step 1",
+        title: "Wait… are you sure? 😳",
+        text: "Because I’m about to get very happy.",
+        boxTitle: "Tap “Next” 👇",
+        list: ["One tiny step for you…", "One giant step for my heart 💘"],
+        nextText: "Next ➜"
+      },
+      {
+        badge: "💞 Step 2",
+        title: "Like… REALLY sure? 🥺",
+        text: "Because I already picked you in every universe.",
+        boxTitle: "If you say yes, you agree to:",
+        list: ["Extra hugs", "A cute date", "Me being annoying (lovingly)"],
+        nextText: "Yes, continue ➜"
+      },
+      {
+        badge: "💖 Step 3",
+        title: "YAYYYYY 💝",
+        text: SETTINGS.personalLine,
+        boxTitle: "Proposed Valentine Plan:",
+        list: ["🍓 Your favorite treat", "🍽️ Dinner (my treat)", "🎬 Cozy movie / something fun", "📸 One cute photo together"],
+        nextText: "More hearts 💗"
+      }
+    ];
+
+    let stepIndex = 0;
+
+    function renderStep() {
+      const s = steps[stepIndex];
+      stepBadge.textContent = s.badge;
+      stepTitle.textContent = s.title;
+      stepText.textContent = s.text;
+      stepBoxTitle.textContent = s.boxTitle;
+
+      stepList.innerHTML = "";
+      s.list.forEach(item => {
+        const li = document.createElement("li");
+        li.textContent = item;
+        stepList.appendChild(li);
+      });
+
+      nextBtn.textContent = s.nextText;
+    }
+
     function showYesScreen() {
+      if (!unlocked) return;
       ask.classList.remove("active");
-      yes.classList.add("active");
+      yesScreen.classList.add("active");
+      stepIndex = 0;
+      renderStep();
       burstHearts(18);
     }
 
     yesBtn.addEventListener("click", showYesScreen);
 
-    // ---- NO BUTTON: TELEPORT ANYWHERE ON SCREEN, UNCATCHABLE ----
+    nextBtn.addEventListener("click", () => {
+      if (stepIndex < steps.length - 1) {
+        stepIndex++;
+        renderStep();
+        burstHearts(12);
+      } else {
+        burstHearts(24);
+      }
+    });
+
+    restartBtn.addEventListener("click", () => {
+      yesScreen.classList.remove("active");
+      ask.classList.add("active");
+      stepIndex = 0;
+      yesScale = 1;
+      yesBtn.style.transform = "scale(1)";
+      teleportNoButton();
+    });
+
+    // ===== NO BUTTON: iOS-friendly "unclickable" behavior =====
+    // - Moves on pointermove/touchmove when finger gets near
+    // - Cancels click/tap
+    // - Uses visualViewport so it works well on iPhone Safari (address bar changes)
     noBtn.style.position = "fixed";
-    noBtn.style.zIndex = 9999;
+    noBtn.style.zIndex = "9999";
+    noBtn.style.touchAction = "none";
     noBtn.setAttribute("tabindex", "-1");
+
+    function viewportSize() {
+      const vv = window.visualViewport;
+      return vv
+        ? { w: vv.width, h: vv.height, ox: vv.offsetLeft, oy: vv.offsetTop }
+        : { w: window.innerWidth, h: window.innerHeight, ox: 0, oy: 0 };
+    }
 
     function teleportNoButton() {
       const padding = 16;
       const rect = noBtn.getBoundingClientRect();
+      const { w, h, ox, oy } = viewportSize();
 
-      const maxX = window.innerWidth - rect.width - padding;
-      const maxY = window.innerHeight - rect.height - padding;
+      const maxX = Math.max(padding, w - rect.width - padding);
+      const maxY = Math.max(padding, h - rect.height - padding);
 
-      const x = padding + Math.random() * Math.max(0, maxX - padding);
-      const y = padding + Math.random() * Math.max(0, maxY - padding);
+      const x = ox + padding + Math.random() * (maxX - padding);
+      const y = oy + padding + Math.random() * (maxY - padding);
 
       noBtn.style.left = `${x}px`;
-      noBtn.style.top = `${y}px`;
+      noBtn.style.top  = `${y}px`;
+
+      avoidYesOverlap();
     }
 
+    function avoidYesOverlap() {
+      const n = noBtn.getBoundingClientRect();
+      const y = yesBtn.getBoundingClientRect();
+      const overlap = !(n.right < y.left || n.left > y.right || n.bottom < y.top || n.top > y.bottom);
+      if (overlap) {
+        // try again quickly
+        const tries = 3;
+        for (let i = 0; i < tries; i++) {
+          const padding = 16;
+          const rect = noBtn.getBoundingClientRect();
+          const { w, h, ox, oy } = viewportSize();
+          const maxX = Math.max(padding, w - rect.width - padding);
+          const maxY = Math.max(padding, h - rect.height - padding);
+          noBtn.style.left = `${ox + padding + Math.random() * (maxX - padding)}px`;
+          noBtn.style.top  = `${oy + padding + Math.random() * (maxY - padding)}px`;
+          const n2 = noBtn.getBoundingClientRect();
+          const overlap2 = !(n2.right < y.left || n2.left > y.right || n2.bottom < y.top || n2.top > y.bottom);
+          if (!overlap2) break;
+        }
+      }
+    }
+
+    function growYesLittle() {
+      if (!unlocked) return;
+      yesScale = Math.min(1.65, yesScale + 0.06);
+      yesBtn.style.transform = `scale(${yesScale})`;
+      const lines = [
+        "Okay… now choose wisely 😌",
+        "Be honest 😇",
+        "That YES button looks nice 👀",
+        "We both know the answer 💖",
+        "Stop playinggg 😭💘"
+      ];
+      tinyText.textContent = lines[Math.min(lines.length - 1, Math.floor(noDodges / 2))];
+    }
+
+    // Start position
     window.addEventListener("load", teleportNoButton);
     window.addEventListener("resize", teleportNoButton);
+    window.visualViewport?.addEventListener("resize", teleportNoButton);
+    window.visualViewport?.addEventListener("scroll", teleportNoButton);
 
-    // Desktop: flee when cursor comes near
-    document.addEventListener("mousemove", (e) => {
+    // Throttle so it feels smooth
+    let lastMove = 0;
+    function maybeRunAway(clientX, clientY) {
+      const now = performance.now();
+      if (now - lastMove < 45) return;
+      lastMove = now;
+
       const r = noBtn.getBoundingClientRect();
       const cx = r.left + r.width / 2;
       const cy = r.top + r.height / 2;
-      const dist = Math.hypot(e.clientX - cx, e.clientY - cy);
+      const dist = Math.hypot(clientX - cx, clientY - cy);
 
-      if (dist < 170) {
+      // Slightly larger danger zone on phones
+      const dangerRadius = 170;
+
+      if (dist < dangerRadius) {
+        noDodges++;
         teleportNoButton();
-        // extra chaos (optional)
-        setTimeout(teleportNoButton, 25);
+        growYesLittle();
       }
+    }
+
+    // Desktop / modern mobile browsers
+    document.addEventListener("pointermove", (e) => {
+      maybeRunAway(e.clientX, e.clientY);
+    }, { passive: true });
+
+    // iOS fallback: move when finger moves
+    document.addEventListener("touchmove", (e) => {
+      const t = e.touches && e.touches[0];
+      if (!t) return;
+      maybeRunAway(t.clientX, t.clientY);
+    }, { passive: true });
+
+    // If they actually touch/click it: cancel + teleport immediately
+    noBtn.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      noDodges++;
+      teleportNoButton();
+      growYesLittle();
     });
 
-    // Mobile: flee on touch
     noBtn.addEventListener("touchstart", (e) => {
       e.preventDefault();
+      e.stopPropagation();
+      noDodges++;
       teleportNoButton();
-      setTimeout(teleportNoButton, 25);
+      growYesLittle();
     }, { passive: false });
 
-    // Safety net: if clicked somehow
     noBtn.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
+      noDodges++;
       teleportNoButton();
+      growYesLittle();
     });
 
-    // ---- Hearts effect ----
-    document.getElementById("confettiBtn").addEventListener("click", () => burstHearts(24));
-
-    // Replay
-    document.getElementById("restartBtn").addEventListener("click", () => {
-      yes.classList.remove("active");
-      ask.classList.add("active");
-      teleportNoButton();
-    });
-
+    // ===== Hearts effect =====
     function burstHearts(count) {
       for (let i = 0; i < count; i++) {
         const heart = document.createElement("div");
@@ -286,6 +557,7 @@
         heart.style.opacity = 0.95;
         heart.style.filter = "drop-shadow(0 10px 10px rgba(0,0,0,.15))";
         heart.style.transition = "transform 2.2s ease, opacity 2.2s ease";
+        heart.style.pointerEvents = "none";
         document.body.appendChild(heart);
 
         requestAnimationFrame(() => {
