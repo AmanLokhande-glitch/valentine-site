@@ -195,6 +195,9 @@
       color:var(--text);
       font-weight:900;
     }
+
+    /* So your long final message keeps its paragraph breaks */
+    #stepText{white-space:pre-wrap}
   </style>
 </head>
 
@@ -222,6 +225,7 @@
 
         <!-- Michael image + hint -->
         <div class="hintRow">
+          <!-- Make sure this file exists in the SAME folder as index.html -->
           <img class="michaelPic" src="./michael.jpg" alt="Michael Scott shouting" />
           <div class="hint" id="hintText"></div>
         </div>
@@ -263,11 +267,19 @@
     // ===== CUSTOMIZE HERE =====
     const SETTINGS = {
       herName: "My Love",
-      loveCode: "i declare bankruptcy", // PASSCODE (case/punctuation doesn't matter)
+      loveCode: "i declare bankruptcy",
       hint: "Hint: Michael shouted it at the office 📣",
-      personalLine: "I choose you. Always. 💞",
 
-      // Song pick
+      // Your long final message (shows at the very end, Step 3)
+      personalLine: `Thank you for staying with me. Thank you for being patient with me, for understanding me, and for handling all of my dramas — even the ones that don’t always make sense. I know I can be a lot sometimes. But you still choose to be here, and you try to understand me instead of judging me. That means more to me than you know. You’ve made me feel safe, loved, and accepted in a way I didn’t realize I needed.
+
+And you genuinely don’t know how much you mean to me. I don’t think I’ve ever been able to fully explain how much I love you, how grateful I am for you, and how much I want you with me — not just right now, but forever.
+
+Sometimes I look back at everything that happened in my life, and one thing I’m truly glad about is coming to India. Even if at the time it felt like a random or risky decision, I’m grateful I took it — because that decision is what brought me to you. It gave me a chance to meet you, to know you, and to fall for you. And honestly… to try to win your heart.
+
+You became the best part of that whole chapter. I don’t take you for granted — not your love, not your patience, not your presence. I just want to keep choosing you, growing with you, and building something real with you. I choose you. Always.`,
+
+      // Song link (redirect)
       songTitle: "You Make My Dreams (Come True) — Hall & Oates",
       songUrl: "https://www.youtube.com/results?search_query=You+Make+My+Dreams+Hall+and+Oates"
     };
@@ -378,10 +390,10 @@
       },
       {
         badge: "💖 Step 3",
-        title: "YAYYYYY 💝",
+        title: "One last thing… 💝",
         text: SETTINGS.personalLine,
-        boxTitle: "Proposed Valentine Plan:",
-        list: ["🍓 Your favorite treat", "🍽️ Dinner (my treat)", "🎬 Cozy movie / something fun", "📸 One cute photo together"],
+        boxTitle: "Our Valentine Plan:",
+        list: ["🎬 Cozy movie night", "🍓 Your favorite treat", "🍽️ Dinner (my treat)", "📸 One cute photo together"],
         nextText: "More hearts 💗"
       }
     ];
