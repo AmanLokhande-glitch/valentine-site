@@ -254,9 +254,21 @@
         <ul id="stepList"></ul>
       </div>
 
+      <!-- MUSIC (local file) -->
       <div class="song">
-        <a id="songLink" href="#" target="_blank" rel="noopener">🎶 Play our song</a>
+        <button class="linkbtn" id="playBtn">▶️ Play Perfect (trim)</button>
+        <span id="nowPlaying" style="font-weight:800; opacity:.85;">(tap to play)</span>
       </div>
+
+      <!-- IMPORTANT:
+           Put your audio file in the SAME folder as index.html.
+           Recommended filename: perfect-trim.mp3
+           If your file is still named "Perfect trim.mp3", use: ./Perfect%20trim.mp3
+      -->
+      <audio id="audioPlayer" preload="auto">
+        <source src="./perfect-trim.mp3" type="audio/mpeg">
+        Your browser doesn’t support audio.
+      </audio>
 
       <div class="footer">
         <button class="linkbtn" id="restartBtn">Replay</button>
@@ -279,10 +291,7 @@ And you genuinely don’t know how much you mean to me. I don’t think I’ve e
 
 Sometimes I look back at everything that happened in my life, and one thing I’m truly glad about is coming to India. Even if at the time it felt like a random or risky decision, I’m grateful I took it because that decision is what brought me to you. It gave me a chance to meet you, to know you, and to fall for you. And honestly… to try to win your heart.
 
-You became the best part of that whole chapter. I don’t take you for granted, not your love, not your patience, not your presence. I just want to keep choosing you, growing with you, and building something real with you. I choose you. Always.`,
-
-      songTitle: "You Make My Dreams (Come True) — Hall & Oates",
-      songUrl: "https://www.youtube.com/results?search_query=You+Make+My+Dreams+Hall+and+Oates"
+You became the best part of that whole chapter. I don’t take you for granted, not your love, not your patience, not your presence. I just want to keep choosing you, growing with you, and building something real with you. I choose you. Always.`
     };
 
     // ===== WIRES =====
@@ -299,8 +308,6 @@ You became the best part of that whole chapter. I don’t take you for granted, 
     const errorText = document.getElementById("errorText");
     const tinyText = document.getElementById("tinyText");
 
-    const songLink = document.getElementById("songLink");
-
     const stepBadge = document.getElementById("stepBadge");
     const stepTitle = document.getElementById("stepTitle");
     const stepText  = document.getElementById("stepText");
@@ -310,10 +317,40 @@ You became the best part of that whole chapter. I don’t take you for granted, 
     const nextBtn = document.getElementById("nextBtn");
     const restartBtn = document.getElementById("restartBtn");
 
+    // MUSIC elements
+    const audio = document.getElementById("audioPlayer");
+    const playBtn = document.getElementById("playBtn");
+    const nowPlaying = document.getElementById("nowPlaying");
+    let isPlaying = false;
+
+    function updatePlayUI() {
+      playBtn.textContent = isPlaying ? "⏸️ Pause Perfect (trim)" : "▶️ Play Perfect (trim)";
+      nowPlaying.textContent = isPlaying ? "Now playing 💞" : "(tap to play)";
+    }
+
+    playBtn.addEventListener("click", async () => {
+      try {
+        if (!isPlaying) {
+          await audio.play(); // iPhone requires a tap
+          isPlaying = true;
+        } else {
+          audio.pause();
+          isPlaying = false;
+        }
+        updatePlayUI();
+      } catch (e) {
+        nowPlaying.textContent = "Couldn’t play - check perfect-trim.mp3 is uploaded";
+      }
+    });
+
+    audio.addEventListener("ended", () => {
+      isPlaying = false;
+      updatePlayUI();
+    });
+
+    // Init text
     herNameEl.textContent = SETTINGS.herName;
     hintText.textContent = SETTINGS.hint;
-    songLink.href = SETTINGS.songUrl;
-    songLink.textContent = "🎶 " + SETTINGS.songTitle;
 
     document.documentElement.style.overscrollBehavior = "none";
     document.body.style.overscrollBehavior = "none";
@@ -366,7 +403,7 @@ You became the best part of that whole chapter. I don’t take you for granted, 
       tinyText.textContent = lines[Math.min(lines.length - 1, Math.floor(noDodges / 2))];
     }
 
-    // ===== YES FLOW: now 4 steps (plan is step 3, message is step 4) =====
+    // ===== YES FLOW: 4 steps (plan is step 3, message is step 4) =====
     const steps = [
       {
         badge: "🥰 Step 1",
@@ -424,6 +461,9 @@ You became the best part of that whole chapter. I don’t take you for granted, 
         planBox.style.display = "none";
         stepList.innerHTML = "";
       }
+
+      // Optional: auto-scroll to top for each step
+      document.querySelector(".card").scrollTo({ top: 0, behavior: "smooth" });
     }
 
     function showYesScreen(){
@@ -437,6 +477,9 @@ You became the best part of that whole chapter. I don’t take you for granted, 
       stepIndex = 0;
       renderStep();
       burstHearts(18);
+
+      // NOTE: iPhone won't allow autoplay here reliably unless user tapped Play button.
+      // So we leave it manual via the Play button.
     }
     yesBtn.addEventListener("click", showYesScreen);
 
@@ -451,12 +494,18 @@ You became the best part of that whole chapter. I don’t take you for granted, 
     });
 
     restartBtn.addEventListener("click", () => {
+      // Pause music on replay so it doesn't keep playing
+      audio.pause();
+      isPlaying = false;
+      updatePlayUI();
+
       yesScreen.classList.remove("active");
       ask.classList.add("active");
       stepIndex = 0;
       yesScale = 1;
       yesBtn.style.transform = "scale(1)";
       teleportNoButton();
+      document.querySelector(".card").scrollTo({ top: 0, behavior: "smooth" });
     });
 
     // ===== NO BUTTON: iOS-safe teleport =====
