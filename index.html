@@ -44,7 +44,7 @@
     }
     @keyframes drift{from{transform:translateY(0)} to{transform:translateY(40px)}}
 
-    /* IMPORTANT: card scrolls if content is long */
+    /* card scrolls if content is long */
     .card{
       width:min(780px, 92vw);
       max-height: calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
@@ -85,7 +85,7 @@
       background:rgba(255,59,122,.14);
     }
 
-    /* IMPORTANT: no position:relative so NO is not trapped */
+    /* no position:relative so NO is not trapped */
     .row{
       display:flex; gap:14px; flex-wrap:wrap; align-items:center;
       margin-top:18px; min-height:64px;
@@ -157,6 +157,7 @@
       object-fit:cover;
       box-shadow:0 10px 22px rgba(0,0,0,.16);
       flex:0 0 auto;
+      background:#fff;
     }
 
     .hint{font-size:13px; opacity:.75}
@@ -188,25 +189,101 @@
       flex-wrap:wrap;
       align-items:center;
     }
-    .song a{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding:12px 14px;
-      border-radius:14px;
-      background:rgba(255,255,255,.72);
-      text-decoration:none;
-      color:var(--text);
-      font-weight:900;
-    }
 
     /* Keep paragraph breaks in the final message */
     #stepText{white-space:pre-wrap}
+
+    /* --- Michael extras --- */
+    .miniRow{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:10px}
+    .ghostBtn{
+      background:rgba(255,255,255,.55);
+      font-weight:900;
+      font-size:14px;
+      padding:10px 12px;
+      border-radius:999px;
+    }
+
+    .gifCard{
+      margin-top:12px;
+      background:rgba(255,255,255,.65);
+      border-radius:18px;
+      padding:12px;
+      display:none;
+      gap:12px;
+      align-items:center;
+    }
+    .gifCard.show{display:flex}
+    .gifCard img{
+      width:110px;
+      height:110px;
+      border-radius:16px;
+      object-fit:cover;
+      box-shadow:0 10px 22px rgba(0,0,0,.16);
+      background:#fff;
+    }
+    .gifCard b{display:block}
+    .gifCard .small{font-size:13px; opacity:.8; margin-top:4px}
+
+    .award{
+      margin-top:12px;
+      display:none;
+      background:rgba(255,255,255,.65);
+      border-radius:18px;
+      padding:12px;
+      gap:12px;
+      align-items:center;
+    }
+    .award.show{display:flex}
+    .award img{
+      width:110px; height:110px;
+      border-radius:16px;
+      object-fit:cover;
+      box-shadow:0 10px 22px rgba(0,0,0,.16);
+      background:#fff;
+    }
+    .award .small{font-size:13px; opacity:.85; margin-top:4px}
+
+    /* Toast popup */
+    .toast{
+      position:fixed;
+      left:50%;
+      bottom:calc(18px + env(safe-area-inset-bottom));
+      transform:translateX(-50%);
+      background:rgba(255,255,255,.92);
+      border-radius:18px;
+      padding:12px 14px;
+      box-shadow:0 20px 60px rgba(0,0,0,.22);
+      display:none;
+      gap:12px;
+      align-items:center;
+      z-index:99999;
+      max-width:min(92vw, 520px);
+    }
+    .toast.show{display:flex}
+    .toast img{
+      width:88px; height:88px;
+      border-radius:16px;
+      object-fit:cover;
+      box-shadow:0 10px 22px rgba(0,0,0,.16);
+      background:#fff;
+      flex:0 0 auto;
+    }
+    .toast b{display:block}
+    .toast .small{font-size:13px; opacity:.85; margin-top:4px}
   </style>
 </head>
 
 <body>
   <div class="hearts"></div>
+
+  <!-- Global toast -->
+  <div class="toast" id="toast">
+    <img id="toastImg" alt="toast gif" />
+    <div>
+      <b id="toastTitle">Toast</b>
+      <div class="small" id="toastText">...</div>
+    </div>
+  </div>
 
   <main class="card" aria-live="polite">
     <!-- SCREEN 1 -->
@@ -232,7 +309,11 @@
           <div class="hint" id="hintText"></div>
         </div>
 
-        <div class="error" id="errorText">Nope 😅 try again</div>
+        <div class="miniRow">
+          <!-- appears only after unlock -->
+          <button class="ghostBtn" id="dontPressBtn" style="display:none;">Don’t press 🤐</button>
+          <div class="error" id="errorText">Nope 😅 try again</div>
+        </div>
       </div>
 
       <div class="row" id="btnRow">
@@ -249,9 +330,41 @@
       <h1 id="stepTitle">Wait… are you sure? 😳</h1>
       <p id="stepText">Because I’m about to get very happy.</p>
 
+      <!-- Date Mike toggle area (only Step 1/2) -->
+      <div class="miniRow" id="dateMikeRow" style="display:none;">
+        <button class="ghostBtn" id="dateMikeBtn">Activate Date Mike 😏</button>
+      </div>
+
+      <!-- Date Mike gif card (shows when toggled) -->
+      <div class="gifCard" id="dateMikeCard">
+        <img id="dateMikeImg" alt="Date Mike gif" />
+        <div>
+          <b id="dateMikeLine">Nice to meet me.</b>
+          <div class="small" id="dateMikeSub">I am ready to accept your love.</div>
+        </div>
+      </div>
+
       <div class="plan" id="planBox">
         <b id="stepBoxTitle">Tap “Next” 👇</b>
         <ul id="stepList"></ul>
+      </div>
+
+      <!-- Award (only Step 3) -->
+      <div class="award" id="awardBox">
+        <img id="awardImg" alt="World's Best Girlfriend" />
+        <div>
+          <b>🏆 World’s Best Girlfriend</b>
+          <div class="small">Reason: Putting up with my drama and still loving me.</div>
+        </div>
+      </div>
+
+      <!-- It’s happening (only Step 4) -->
+      <div class="gifCard" id="happeningCard">
+        <img id="happeningImg" alt="It's happening gif" />
+        <div>
+          <b>IT’S HAPPENING!!!</b>
+          <div class="small">Okay okay okay stay calm 😭💘</div>
+        </div>
       </div>
 
       <!-- MUSIC (local file) -->
@@ -260,12 +373,8 @@
         <span id="nowPlaying" style="font-weight:800; opacity:.85;">(tap to play)</span>
       </div>
 
-      <!-- IMPORTANT:
-           Put your audio file in the SAME folder as index.html.
-           Recommended filename: perfect-trim.mp3
-           If your file is still named "Perfect trim.mp3", use: ./Perfect%20trim.mp3
-      -->
       <audio id="audioPlayer" preload="auto">
+        <!-- Change this if your filename is different -->
         <source src="./perfect-trim.mp3" type="audio/mpeg">
         Your browser doesn’t support audio.
       </audio>
@@ -278,13 +387,21 @@
   </main>
 
   <script>
-    // ===== CUSTOMIZE HERE =====
+    // NOTE: since your filenames include spaces/apostrophes, we use URL encoding.
+    // If you renamed them to clean names, just change these to the new filenames.
+    const ASSETS = {
+      dateMike: "./date%20mike.gif",
+      dateMikeCrash: "./Date%20mike%20crash.gif",
+      itsHappening: "./it%27s%20happening.gif",
+      noGod: "./No%20God.gif",
+      thatsWhatSheSaid: "./thats%27%20what%20she%20said.gif",
+      worldsBestGirlfriend: "./World%27s%20Best%20Girlfriend.png"
+    };
+
     const SETTINGS = {
       herName: "My Love",
       loveCode: "i declare bankruptcy",
       hint: "Hint: Michael shouted it at the office 📣",
-
-      // Shows ONLY on the final step (Step 4)
       personalLine: `Thank you for staying with me. Thank you for being patient with me, for understanding me, and for handling all of my dramas, even the ones that don’t always make sense. I know I can be a lot sometimes. But you still choose to be here, and you try to understand me instead of judging me. That means more to me than you know. You’ve made me feel safe, loved, and accepted in a way I didn’t realize I needed.
 
 And you genuinely don’t know how much you mean to me. I don’t think I’ve ever been able to fully explain how much I love you, how grateful I am for you, and how much I want you with me, not just right now, but forever.
@@ -294,7 +411,7 @@ Sometimes I look back at everything that happened in my life, and one thing I’
 You became the best part of that whole chapter. I don’t take you for granted, not your love, not your patience, not your presence. I just want to keep choosing you, growing with you, and building something real with you. I choose you. Always.`
     };
 
-    // ===== WIRES =====
+    // WIRES
     const herNameEl = document.getElementById("herName");
     const ask = document.getElementById("screen-ask");
     const yesScreen = document.getElementById("screen-yes");
@@ -308,6 +425,8 @@ You became the best part of that whole chapter. I don’t take you for granted, 
     const errorText = document.getElementById("errorText");
     const tinyText = document.getElementById("tinyText");
 
+    const dontPressBtn = document.getElementById("dontPressBtn");
+
     const stepBadge = document.getElementById("stepBadge");
     const stepTitle = document.getElementById("stepTitle");
     const stepText  = document.getElementById("stepText");
@@ -317,7 +436,39 @@ You became the best part of that whole chapter. I don’t take you for granted, 
     const nextBtn = document.getElementById("nextBtn");
     const restartBtn = document.getElementById("restartBtn");
 
-    // MUSIC elements
+    // Date Mike
+    const dateMikeRow = document.getElementById("dateMikeRow");
+    const dateMikeBtn = document.getElementById("dateMikeBtn");
+    const dateMikeCard = document.getElementById("dateMikeCard");
+    const dateMikeImg = document.getElementById("dateMikeImg");
+    const dateMikeLine = document.getElementById("dateMikeLine");
+    const dateMikeSub = document.getElementById("dateMikeSub");
+
+    // Award
+    const awardBox = document.getElementById("awardBox");
+    const awardImg = document.getElementById("awardImg");
+
+    // It's happening
+    const happeningCard = document.getElementById("happeningCard");
+    const happeningImg = document.getElementById("happeningImg");
+
+    // Toast
+    const toast = document.getElementById("toast");
+    const toastImg = document.getElementById("toastImg");
+    const toastTitle = document.getElementById("toastTitle");
+    const toastText = document.getElementById("toastText");
+    let toastTimer = null;
+
+    function showToast(title, text, imgSrc){
+      toastTitle.textContent = title;
+      toastText.textContent = text;
+      toastImg.src = imgSrc;
+      toast.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove("show"), 2400);
+    }
+
+    // Music
     const audio = document.getElementById("audioPlayer");
     const playBtn = document.getElementById("playBtn");
     const nowPlaying = document.getElementById("nowPlaying");
@@ -348,9 +499,12 @@ You became the best part of that whole chapter. I don’t take you for granted, 
       updatePlayUI();
     });
 
-    // Init text
+    // Init
     herNameEl.textContent = SETTINGS.herName;
     hintText.textContent = SETTINGS.hint;
+
+    awardImg.src = ASSETS.worldsBestGirlfriend;
+    happeningImg.src = ASSETS.itsHappening;
 
     document.documentElement.style.overscrollBehavior = "none";
     document.body.style.overscrollBehavior = "none";
@@ -358,6 +512,8 @@ You became the best part of that whole chapter. I don’t take you for granted, 
     let unlocked = false;
     let yesScale = 1;
     let noDodges = 0;
+    let dateMikeOn = false;
+    let dateMikeCooldown = false;
 
     function setYesEnabled(enabled) {
       yesBtn.disabled = !enabled;
@@ -381,6 +537,9 @@ You became the best part of that whole chapter. I don’t take you for granted, 
         setYesEnabled(true);
         burstHearts(14);
         codeInput.blur();
+
+        // Show the easter egg button
+        dontPressBtn.style.display = "inline-flex";
       } else {
         errorText.classList.add("show");
         burstHearts(6);
@@ -388,6 +547,12 @@ You became the best part of that whole chapter. I don’t take you for granted, 
     }
     unlockBtn.addEventListener("click", unlock);
     codeInput.addEventListener("keydown", (e) => { if (e.key === "Enter") unlock(); });
+
+    // “That’s what she said” easter egg
+    dontPressBtn.addEventListener("click", () => {
+      showToast("Okay…", "That’s what she said 😭", ASSETS.thatsWhatSheSaid);
+      burstHearts(10);
+    });
 
     function growYesLittle(){
       yesScale = Math.min(1.95, yesScale + 0.10);
@@ -403,7 +568,7 @@ You became the best part of that whole chapter. I don’t take you for granted, 
       tinyText.textContent = lines[Math.min(lines.length - 1, Math.floor(noDodges / 2))];
     }
 
-    // ===== YES FLOW: 4 steps (plan is step 3, message is step 4) =====
+    // YES FLOW: 4 steps (plan is step 3, message is step 4)
     const steps = [
       {
         badge: "🥰 Step 1",
@@ -447,7 +612,7 @@ You became the best part of that whole chapter. I don’t take you for granted, 
       stepText.textContent  = s.text;
       nextBtn.textContent = s.nextText;
 
-      // Plan box visibility
+      // Show/hide plan
       if (s.list && s.list.length) {
         planBox.style.display = "block";
         stepBoxTitle.textContent = s.boxTitle || "";
@@ -462,7 +627,26 @@ You became the best part of that whole chapter. I don’t take you for granted, 
         stepList.innerHTML = "";
       }
 
-      // Optional: auto-scroll to top for each step
+      // DATE MIKE: only show in Step 1 & 2
+      const showDM = (stepIndex === 0 || stepIndex === 1);
+      dateMikeRow.style.display = showDM ? "flex" : "none";
+      if (!showDM) {
+        dateMikeCard.classList.remove("show");
+        dateMikeOn = false;
+        dateMikeBtn.textContent = "Activate Date Mike 😏";
+      }
+
+      // Award: only Step 3
+      awardBox.classList.toggle("show", stepIndex === 2);
+
+      // It's happening: only Step 4
+      happeningCard.classList.toggle("show", stepIndex === 3);
+      if (stepIndex === 3) {
+        burstHearts(26);
+        showToast("IT’S HAPPENING!!!", "Okay okay okay stay calm 😭💘", ASSETS.itsHappening);
+      }
+
+      // scroll to top each step
       document.querySelector(".card").scrollTo({ top: 0, behavior: "smooth" });
     }
 
@@ -477,9 +661,6 @@ You became the best part of that whole chapter. I don’t take you for granted, 
       stepIndex = 0;
       renderStep();
       burstHearts(18);
-
-      // NOTE: iPhone won't allow autoplay here reliably unless user tapped Play button.
-      // So we leave it manual via the Play button.
     }
     yesBtn.addEventListener("click", showYesScreen);
 
@@ -494,10 +675,16 @@ You became the best part of that whole chapter. I don’t take you for granted, 
     });
 
     restartBtn.addEventListener("click", () => {
-      // Pause music on replay so it doesn't keep playing
+      // pause music on replay
       audio.pause();
       isPlaying = false;
       updatePlayUI();
+
+      // hide extras
+      dateMikeCard.classList.remove("show");
+      happeningCard.classList.remove("show");
+      awardBox.classList.remove("show");
+      toast.classList.remove("show");
 
       yesScreen.classList.remove("active");
       ask.classList.add("active");
@@ -508,7 +695,39 @@ You became the best part of that whole chapter. I don’t take you for granted, 
       document.querySelector(".card").scrollTo({ top: 0, behavior: "smooth" });
     });
 
-    // ===== NO BUTTON: iOS-safe teleport =====
+    // Date Mike toggle behavior (with crash gif)
+    dateMikeImg.src = ASSETS.dateMike;
+
+    dateMikeBtn.addEventListener("click", () => {
+      if (dateMikeCooldown) return;
+
+      if (!dateMikeOn) {
+        dateMikeOn = true;
+        dateMikeBtn.textContent = "Deactivate Date Mike 😭";
+        dateMikeImg.src = ASSETS.dateMike;
+        dateMikeLine.textContent = "Nice to meet me.";
+        dateMikeSub.textContent = "I am ready to accept your love.";
+        dateMikeCard.classList.add("show");
+        burstHearts(10);
+      } else {
+        // show crash for a moment, then turn off
+        dateMikeCooldown = true;
+        dateMikeImg.src = ASSETS.dateMikeCrash;
+        dateMikeLine.textContent = "Date Mike… crashed 💀";
+        dateMikeSub.textContent = "Pool stick incident. We’ll pretend it didn’t happen.";
+        burstHearts(8);
+
+        setTimeout(() => {
+          dateMikeOn = false;
+          dateMikeBtn.textContent = "Activate Date Mike 😏";
+          dateMikeCard.classList.remove("show");
+          dateMikeImg.src = ASSETS.dateMike;
+          dateMikeCooldown = false;
+        }, 1200);
+      }
+    });
+
+    // NO BUTTON: iOS-safe teleport
     noBtn.style.position = "fixed";
     noBtn.style.zIndex = "9999";
     noBtn.style.touchAction = "none";
@@ -557,6 +776,8 @@ You became the best part of that whole chapter. I don’t take you for granted, 
     }
 
     let lastMove = 0;
+    let noGodShown = false;
+
     function maybeRunAway(clientX, clientY){
       const now = performance.now();
       if (now - lastMove < 45) return;
@@ -572,6 +793,13 @@ You became the best part of that whole chapter. I don’t take you for granted, 
         noDodges++;
         teleportNoButton();
         growYesLittle();
+
+        // After 5 dodges show the "NO GOD PLEASE NO" toast once
+        if (!noGodShown && noDodges >= 5) {
+          noGodShown = true;
+          showToast("NOOO GOD PLEASE NOOOO", "She tried to press NO too many times 😭", ASSETS.noGod);
+          burstHearts(10);
+        }
       }
     }
 
@@ -591,12 +819,18 @@ You became the best part of that whole chapter. I don’t take you for granted, 
       noDodges++;
       teleportNoButton();
       growYesLittle();
+
+      if (!noGodShown && noDodges >= 5) {
+        noGodShown = true;
+        showToast("NOOO GOD PLEASE NOOOO", "Absolutely not 😭", ASSETS.noGod);
+        burstHearts(10);
+      }
     }
     noBtn.addEventListener("pointerdown", denyAndRun);
     noBtn.addEventListener("touchstart", denyAndRun, { passive: false });
     noBtn.addEventListener("click", denyAndRun);
 
-    // ===== HEARTS =====
+    // HEARTS
     function burstHearts(count){
       for (let i = 0; i < count; i++){
         const heart = document.createElement("div");
